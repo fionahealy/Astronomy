@@ -14,7 +14,7 @@ def fitsconverter(fitsfile):
 
 def plot_beam(minor,major,bpa,xpos,ypos,cellsize,colour,linesize):
 
-	bpa = - bpa
+	bpa = bpa+90	#argh why
 	a=minor/(2*cellsize)     
 	b=major/(2*cellsize)    
 	t = numpy.linspace(0, 2*numpy.pi, 100)
@@ -57,7 +57,7 @@ def rotate_grid(angle,imsize,unrotated_point):
 
 
 
-def box(blc,trc,rot=0,pix_from_aips=True):
+def box(imsize,blc,trc,rot=0,pix_from_aips=True):
 
 	# try to vectorise
 	x = [blc[0],blc[0],trc[0],trc[0],blc[0]]
@@ -68,7 +68,7 @@ def box(blc,trc,rot=0,pix_from_aips=True):
 
 	if rot!=0:
 		for i in range(0,5):
-			point_rot = rotate_grid(30,512,[x[i],y[i]])
+			point_rot = rotate_grid(30,imsize,[x[i],y[i]])
 			x_rot.append(point_rot[0])
 			y_rot.append(point_rot[1])
 
@@ -77,17 +77,17 @@ def box(blc,trc,rot=0,pix_from_aips=True):
 
 
 	if pix_from_aips:
-		y = [512 - t for t in y]
+		y = [imsize - t for t in y]
 
 	pyplot.plot(x,y,color='gray',linewidth=0.8,linestyle='--')
 
 
 
-def plot_setup(title,blc,trc,bmin,bmaj,bpa):
+def plot_setup(title,blc,trc,bmin,bmaj,bpa,cellsize):
 
 	corner = [blc[0]+15,blc[1]+15]
 
-	plot_beam(bmin,bmaj,bpa,corner[0],corner[1],0.0005,"black",0.7)
+	plot_beam(bmin,bmaj,bpa,corner[0],corner[1],cellsize,"black",0.7)
 
 	pyplot.axes().set_aspect('equal')
 	pyplot.title(title,fontsize=12,fontname='monospace')
@@ -100,31 +100,33 @@ def plot_setup(title,blc,trc,bmin,bmaj,bpa):
 
 
 
-im = fitsconverter('1800+7828I1.FITS')
-rm = fitsconverter('1800CLIP7')
-
-plot_setup("RM Map of 1803+784",[220,180],[400,350],0.00644,0.00696,-61.82)
-contourplot(im,[-0.25,0.25,0.5,1,2,4,8,16,32,64,95],'black')
-raster(rm,'cubehelix','lower',-20,20,'RM (rad/m/m)')
-box([239,234],[275,281])
-
-# pyplot.show()
-
 def get_info(file):
 
 	info_dict = {}
 
 	hdul = fits.open(file)
 	header = hdul[0].header
+	im_beam = Beam.from_fits_header(header)
+
 	info_dict['cellsize'] = header['CDELT2']*3600
 	info_dict['imsize'] = header['NAXIS1']
-	im_beam = Beam.from_fits_header(header)  
 	info_dict['bmaj'] = im_beam.major.value*3600
 	info_dict['bmin'] = im_beam.minor.value*3600
 	info_dict['bpa'] = im_beam.pa.value
 
 	return info_dict
 
+
+
 info_dict=get_info('1800+7828I1.FITS')
-print(info_dict)
+
+im = fitsconverter('1800+7828I1.FITS')
+rm = fitsconverter('1800CLIP7')
+
+plot_setup("RM Map of 1803+784",[220,180],[400,350],info_dict['bmin'],info_dict['bmaj'],info_dict['bpa'],info_dict['cellsize'])
+contourplot(im,[-0.25,0.25,0.5,1,2,4,8,16,32,64,95],'black')
+raster(rm,'cubehelix','lower',-20,20,'RM (rad/m/m)')
+box(info_dict['imsize'],[239,234],[275,281])
+pyplot.show()
+
 
