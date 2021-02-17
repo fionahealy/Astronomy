@@ -83,7 +83,7 @@ def box(imsize,blc,trc,rot=0,pix_from_aips=True):
 
 
 
-def plot_setup(title,blc,trc,bmin,bmaj,bpa,cellsize):
+def plot_setup(title,blc,trc,bmin,bmaj,bpa,cellsize,imsize):
 
 	corner = [blc[0]+15,blc[1]+15]
 
@@ -92,12 +92,19 @@ def plot_setup(title,blc,trc,bmin,bmaj,bpa,cellsize):
 	pyplot.axes().set_aspect('equal')
 	pyplot.title(title,fontsize=12,fontname='monospace')
 
-	pyplot.xlim(blc[0],trc[0])
-	pyplot.ylim(blc[1],trc[1])
 
 	pyplot.xlabel("pix",fontsize=10, fontname='monospace')
 	pyplot.ylabel("pix",fontsize=10, fontname='monospace')
 
+	ticks = [0.06,0.04,0.02,0.0,-0.02,-0.04,-0.06]
+	pixel_ticks_reftocent = -numpy.divide(ticks,cellsize)
+	pixel_ticks = pixel_ticks_reftocent + imsize/2
+
+	pyplot.xticks(pixel_ticks,ticks,fontsize=12,fontname='monospace')
+	pyplot.yticks(pixel_ticks,ticks,fontsize=12,fontname='monospace')
+
+	pyplot.xlim(blc[0],trc[0])
+	pyplot.ylim(blc[1],trc[1])
 
 
 def get_info(file):
@@ -123,10 +130,15 @@ info_dict=get_info('1800+7828I1.FITS')
 im = fitsconverter('1800+7828I1.FITS')
 rm = fitsconverter('1800CLIP7')
 
-plot_setup("RM Map of 1803+784",[220,180],[400,350],info_dict['bmin'],info_dict['bmaj'],info_dict['bpa'],info_dict['cellsize'])
+plot_setup("RM Map of 1803+784",[220,180],[400,350],info_dict['bmin'],info_dict['bmaj'],info_dict['bpa'],info_dict['cellsize'],info_dict['imsize'])
 contourplot(im,[-0.25,0.25,0.5,1,2,4,8,16,32,64,95],'black')
 raster(rm,'cubehelix','lower',-20,20,'RM (rad/m/m)')
 box(info_dict['imsize'],[239,234],[275,281])
 pyplot.show()
+
+# add noise box
+# add axis conversion
+# add text containing plot info
+# add style options
 
 
