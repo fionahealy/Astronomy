@@ -111,17 +111,20 @@ box([239,234],[275,281])
 # pyplot.show()
 
 def get_info(file):
+
+	info_dict = {}
+
 	hdul = fits.open(file)
 	header = hdul[0].header
-	cellsize = header['CDELT2']*3600
-	imsize = header['NAXIS1']
+	info_dict['cellsize'] = header['CDELT2']*3600
+	info_dict['imsize'] = header['NAXIS1']
 	im_beam = Beam.from_fits_header(header)  
-	bmaj = im_beam.major.value*3600
-	bmin = im_beam.minor.value*3600
-	bpa = im_beam.pa.value
+	info_dict['bmaj'] = im_beam.major.value*3600
+	info_dict['bmin'] = im_beam.minor.value*3600
+	info_dict['bpa'] = im_beam.pa.value
 
-	return cellsize,imsize,im_beam,bmaj,bmin,bpa
+	return info_dict
 
-cellsize,imsize,im_beam,bmaj,bmin,bpa=get_info('1800+7828I1.FITS')
-print(cellsize)
+info_dict=get_info('1800+7828I1.FITS')
+print(info_dict)
 
